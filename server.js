@@ -43,7 +43,7 @@ server.post('/insertuser', (request, response) => {
     const { name, password } = request.body;
 
     hashPassword(password).then((newPassword)=>{
-        database.query('INSERT INTO user (name, password) VALUES (?, ?)', [name, newPassword], (error) => {
+        database.query('INSERT INTO user (name, password) VALUES ("'+name+'","'+newPassword+'")', (error) => {
             if (error) return response.status(500).send(error);
             response.status(201).json({name});
         });
@@ -54,7 +54,7 @@ server.post('/insertuser', (request, response) => {
 server.put('/user/:id', (request, response) => {
     const { name } = request.body;
 
-    database.query('UPDATE user SET name = ? WHERE id = ?', [ name , request.params.id], (error, result) => {
+    database.query('UPDATE user SET name = "'+name+'" WHERE id = '+request.params.id+'', (error, result) => {
         if (error) return response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
         response.json({ id: request.params.id, name});
@@ -63,7 +63,7 @@ server.put('/user/:id', (request, response) => {
 
 // DELETE - Delete User
 server.delete('/user/:id', (request, response) => {
-    database.query('DELETE FROM user WHERE id = ?', [request.params.id], (error, result) => {
+    database.query('DELETE FROM user WHERE id = '+request.params.id+'', (error, result) => {
         if (error) return express.response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
         response.status(204).send();
