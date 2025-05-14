@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const server = express();
 
 server.use(express.json());
+server.use(express.urlencoded({ extended: true }))
+server.set('view engine', 'ejs');
 
 const port = 3000;
 
@@ -33,7 +35,16 @@ function hashPassword(password) {
 // GET - List All Users
 server.get('/users', (request, response) => {
     database.query('SELECT * FROM user', (error, datas) => {
-        if (error) return res.status(500).send(error);
+        if (error) return response.status(500).send(error);
+        response.json(datas);
+    });
+});
+
+// GET - Get a user
+server.get('/user/:id', (request, response) => {
+    query = `SELECT * FROM user where id = '${request.params.id}' `;
+    database.query(query, (error, datas) => {
+        if (error) return response.status(500).send(error);
         response.json(datas);
     });
 });
@@ -41,7 +52,6 @@ server.get('/users', (request, response) => {
 // POST - Create User
 server.post('/insertuser', (request, response) => {
     const { name, password } = request.body;
-
     hashPassword(password).then((newPassword)=>{
         database.query('INSERT INTO user (name, password) VALUES ("'+name+'","'+newPassword+'")', (error) => {
             if (error) return response.status(500).send(error);
@@ -69,6 +79,23 @@ server.delete('/user/:id', (request, response) => {
         response.status(204).send();
     });
 });
+
+server.post('/comments',(request,response)=>{
+    const {author, message} = request.body;
+    console.log(request.body);
+    database.query('INSERT INTO comment (comment, author) VALUES ("'+message+'","'+author+'")', (error) => {
+        if (error) return response.status(500).send(error);
+        response.status(201).json({message});
+    });
+    response.status(201);
+});
+
+server.get('/comments',(request,response)=>{
+    database.query('SELECT * FROM comment', (error, comments) => {
+        if (error) return response.status(500).send(error);
+        response.render('comments',{comments});
+    });
+})
 
 // Start Server
 server.listen(port, () => {
