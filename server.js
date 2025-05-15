@@ -82,7 +82,7 @@ server.post('/login', (request, response) => {
 
         if (!match) return response.status(401).json({ error: 'User or password is incorrect!' });
 
-        const jwtToken = jwt.sign({ id: user.id, username:user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         console.log(jwtToken)
         response.json({ jwtToken });
     }
