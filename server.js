@@ -2,7 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const mysql = require('mysql2');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const validationJWT = require('./middleware.js');
 
 const server = express();
 
@@ -13,10 +15,10 @@ server.set('view engine', 'ejs');
 const port = 3000;
 
 const database = mysql.createConnection({
-    host:  process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    host:  process.env.DATABASE_HOST,
+    user: process.env.DATABASE_USER,
+    password: process.env.DATABASE_PASSWORD,
+    database: process.env.DATABASE_NAME
 });
 
 database.connect(error => {
@@ -32,14 +34,6 @@ function hashPassword(password) {
     return bcrypt.hash(password, 10);
 }
 
-// GET - List All Users
-server.get('/users', (request, response) => {
-    database.query('SELECT * FROM user', (error, datas) => {
-        if (error) return response.status(500).send(error);
-        response.json(datas);
-    });
-});
-
 // GET - Get a user
 server.get('/user/:id', (request, response) => {
     query = `SELECT * FROM user where id = '${request.params.id}' `;
@@ -49,53 +43,83 @@ server.get('/user/:id', (request, response) => {
     });
 });
 
+// GET - user - page
+server.get('/users-page', (request,response)=>{
+    database.query('SELECT * FROM user', (error, users) => {
+        if (error) return response.status(500).send(error);
+        response.render('users',{users});
+    });
+})
+
+// GET - csrf - page
+server.get('/CSRF', (request,response)=>{
+    response.render('csrf');
+})
+
 // POST - Create User
 server.post('/insertuser', (request, response) => {
-    const { name, password } = request.body;
+    const { username, email , password } = request.body;
+
+    if(!username||!email||!password) response.status(400).send("Invalid password or username or email !");
+
     hashPassword(password).then((newPassword)=>{
-        database.query('INSERT INTO user (name, password) VALUES ("'+name+'","'+newPassword+'")', (error) => {
+        database.query('INSERT INTO user (username, email, password) VALUES (?, ?, ?)', [username, email, newPassword], (error) => {
             if (error) return response.status(500).send(error);
-            response.status(201).json({name});
+            response.status(201).json({username});
         });
     })
 });
 
-// PUT - Update User
-server.put('/user/:id', (request, response) => {
-    const { name } = request.body;
+server.post('/login', (request, response) => {
+  const { username, password } = request.body;
 
-    database.query('UPDATE user SET name = "'+name+'" WHERE id = '+request.params.id+'', (error, result) => {
+  database.query('SELECT * FROM user WHERE username = ?', [username], 
+    async (error, results) => {
+        if (error || results.length === 0) return response.status(401).json({ error: 'User or password is incorrect!' });
+
+        const user = results[0];
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) return response.status(401).json({ error: 'User or password is incorrect!' });
+
+        const jwtToken = jwt.sign({ id: user.id, username:user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        console.log(jwtToken)
+        response.json({ jwtToken });
+    }
+    );
+});
+
+//PROTEGER
+
+// GET - List All Users
+server.get('/users', validationJWT ,(request, response) => {
+    database.query('SELECT * FROM user', (error, datas) => {
+        if (error) return response.status(500).send(error);
+        response.json(datas);
+    });
+});
+
+// PUT - Update User
+server.put('/user/:id', validationJWT, (request, response) => {
+    const { username, email, password } = request.body;
+
+    database.query('UPDATE user SET username = ?, email = ? , password = ? WHERE id = ?', [ username, email, password , request.params.id], (error, result) => {
         if (error) return response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
-        response.json({ id: request.params.id, name});
+        response.json({ id: request.params.id, username});
     });
 });
 
 // DELETE - Delete User
-server.delete('/user/:id', (request, response) => {
-    database.query('DELETE FROM user WHERE id = '+request.params.id+'', (error, result) => {
+server.delete('/user/:id', validationJWT, (request, response) => {
+    database.query('DELETE FROM user WHERE id = ?', [request.params.id], (error, result) => {
         if (error) return express.response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
-        response.status(204).send();
+        response.status(204).send("User deleted!");
     });
 });
 
-server.post('/comments',(request,response)=>{
-    const {author, message} = request.body;
-    console.log(request.body);
-    database.query('INSERT INTO comment (comment, author) VALUES ("'+message+'","'+author+'")', (error) => {
-        if (error) return response.status(500).send(error);
-        response.status(201).json({message});
-    });
-    response.status(201);
-});
 
-server.get('/comments',(request,response)=>{
-    database.query('SELECT * FROM comment', (error, comments) => {
-        if (error) return response.status(500).send(error);
-        response.render('comments',{comments});
-    });
-})
 
 // Start Server
 server.listen(port, () => {
