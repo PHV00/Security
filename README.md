@@ -58,6 +58,7 @@ CREATE TABLE user (
 );
 ```
 ##🧪 Exemplos de requisições (Postman)
+-Para acessar  basta entrar em :https://app.getpostman.com/join-team?invite_code=45ee1121586d7d01c61ba14b666565a1ee88cb57f143fa962126528eca5820fe&target_code=17a0968f842d2073f3adbe4e852eb64f
 ### Registro
 POST /insertuser
 {
