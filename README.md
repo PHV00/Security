@@ -1,33 +1,41 @@
-Pentesting API
-O projeto está separado em duas branch: incorrectServer: Versão sem segurança correctServer : Versão com segurança
+# Pentesting API
+O projeto está separado em duas branch: 
+  incorrectServer: Versão sem segurança 
+  correctServer : Versão com segurança
 
-🛠 Tecnologias
+## 🛠 Tecnologias
 
-Node.js
-Express
-MySQL
-bcrypt
-JWT
-dotenv
-ejs
-jsonwebtoken
+-Node.js
+-Express
+-MySQL
+-bcrypt
+-JWT
+-dotenv
+-ejs
+-jsonwebtoken
 
-📦 Instalação
+##📦 Instalação
+```bash
 npm install
-🚀 Rodar localmente
+```
+##🚀 Rodar localmente
+```bash
 node server.js
-📋 Variáveis de ambiente
-Crie um arquivo .env com:
+```
+##📋 Variáveis de ambiente
 
+Crie um arquivo .env com:
+```
 DATABASE_HOST=localhost
 DATABASE_USER=root
 DATABASE_PASSWORD=
 DATABASE_NAME=security
 PORT=3000
 JWT_SECRET=Nota10
-
+```
 🗃️ Banco de dados:
 
+```sql
 CREATE DATABASE Security;
 
 USE Security;
@@ -48,22 +56,22 @@ CREATE TABLE user (
   name VARCHAR(255),
   password VARCHAR(255)
 );
-
-🧪 Exemplos de requisições (Postman)
-Registro
-POST /users/register
+```
+##🧪 Exemplos de requisições (Postman)
+### Registro
+POST /insertuser
 {
-  "username": "admin",
-  "email": "admin@email.com",
-  "password": "123456"
+    "email" : "pedro@gmail.com",
+    "username" : "pedro",
+    "password" : "123"
 }
 Login
 POST /users/login
 {
-  "email": "admin@email.com",
-  "password": "123456"
+  "username": "pedro",
+  "password": "123"
 }
 Acesso protegido (com token JWT)
 
-👥 Equipe
-Desenvolvido por: Pedro Henrique Vitoreti
+##👥 Equipe
+-Desenvolvido por: Pedro Henrique Vitoreti
