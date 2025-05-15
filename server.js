@@ -34,22 +34,6 @@ function hashPassword(password) {
     return bcrypt.hash(password, 10);
 }
 
-// GET - Get a user
-server.get('/user/:id', (request, response) => {
-    query = `SELECT * FROM user where id = '${request.params.id}' `;
-    database.query(query, (error, datas) => {
-        if (error) return response.status(500).send(error);
-        response.json(datas);
-    });
-});
-
-// GET - user - page
-server.get('/users-page', (request,response)=>{
-    database.query('SELECT * FROM user', (error, users) => {
-        if (error) return response.status(500).send(error);
-        response.render('users',{users});
-    });
-})
 
 // GET - csrf - page
 server.get('/CSRF', (request,response)=>{
@@ -70,6 +54,7 @@ server.post('/insertuser', (request, response) => {
     })
 });
 
+// POST - Create Login
 server.post('/login', (request, response) => {
   const { username, password } = request.body;
 
@@ -83,13 +68,33 @@ server.post('/login', (request, response) => {
         if (!match) return response.status(401).json({ error: 'User or password is incorrect!' });
 
         const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        console.log(jwtToken)
         response.json({ jwtToken });
+        // response.cookie('token', jwtToken, {
+        //     httpOnly: true,
+        //     // secure: true
+        // });
     }
     );
 });
 
 //PROTEGER
+
+// GET - Get a user
+server.get('/user/:id', validationJWT ,(request, response) => {
+    query = `SELECT * FROM user where id = '${request.params.id}' `;
+    database.query(query, (error, datas) => {
+        if (error) return response.status(500).send(error);
+        response.json(datas);
+    });
+});
+
+// GET - user - page
+server.get('/users-page', validationJWT, (request,response)=>{
+    database.query('SELECT * FROM user', (error, users) => {
+        if (error) return response.status(500).send(error);
+        response.render('users',{users});
+    });
+})
 
 // GET - List All Users
 server.get('/users', validationJWT ,(request, response) => {
