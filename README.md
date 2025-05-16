@@ -93,7 +93,7 @@ Authorization: Bearer <token>
 
 ### Get a user
 ```
-GET /users-page
+GET /user/:id
 Authorization: Bearer <token>
 ```
 
@@ -116,7 +116,7 @@ PUT /user/:id
 
 ### Delete a user
 ```
-DELETE /users/1
+DELETE /user/1
 Authorization: Bearer <token>
 ```
 
@@ -129,6 +129,46 @@ Authorization: Bearer <token>
 
 ## Rotas do codigo inseguro
 
+### Registro
+```
+POST /insertuser
+{
+    "name" : "pedro",
+    "password" : "123"
+}
+```
+
+### Get all users
+```
+GET /users
+```
+
+### Get a user
+```
+GET /user:id
+```
+
+### Update a user
+```
+PUT /user/:id
+{
+    "name":"NewUsername",
+    "password" : "NewPassword@"
+}
+```
+
+### Delete a user
+```
+DELETE /user/1
+```
+
+
+### 🔐 Praticas de segurança contidas
+
+- ❌ Ausencia de CSP porém foi implementa tokens JWT nos formularios sencíveis
+- ❌ Prepared statements (por meio do uso de coringas ? )
+- ❌ JWT em rotas sigilosas
+- ❌ Hash de senhas com bcrypt
 
 ##👥 Equipe
 -Desenvolvido por: Pedro Henrique Vitoreti
