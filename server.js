@@ -32,8 +32,60 @@ function hashPassword(password) {
     return bcrypt.hash(password, 10);
 }
 
+// Middleware de proteção
+function checkAuth(req, res, next) {
+  if (!req.session.userId) return res.redirect('/login');
+  next();
+}
+
+// LOGIN - Form
+server.get('/login', (req, res) => {
+  res.render('login', { error: null });
+});
+
+// LOGIN - Submit
+server.post('/login', (req, res) => {
+  const { username , password } = req.body;
+
+  console.log(username);
+  console.log(typeof(username));
+  console.log(password);
+  console.log(typeof(password));
+
+  database.query('SELECT * FROM user WHERE username = ?', [username], async (err, user) => {
+    if (!user) return res.render('login', { error: 'Usuário não encontrado' });
+
+    console.log("*************");
+    console.log(password);
+    console.log(user);
+    console.log(user[0].id);
+    console.log(user[0].password);
+
+    const match = await bcrypt.compare(password, user[0].password);
+    if (!match) return res.render('login', { error: 'Senha incorreta' });
+
+    req.session.userId = user.id;
+    res.redirect('/users');
+  });
+});
+
+// LOGOUT
+server.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login');
+  });
+});
+
+// GET - user - page
+server.get('/users-page', checkAuth, (request,response)=>{
+    database.query('SELECT * FROM user', (error, users) => {
+        if (error) return response.status(500).send(error);
+        response.render('users',{users});
+    });
+})
+
 // GET - List All Users
-server.get('/users', (request, response) => {
+server.get('/users', checkAuth,(request, response) => {
     database.query('SELECT * FROM user', (error, datas) => {
         if (error) return response.status(500).send(error);
         response.json(datas);
@@ -41,7 +93,7 @@ server.get('/users', (request, response) => {
 });
 
 // GET - Get a user
-server.get('/user/:id', (request, response) => {
+server.get('/user/:id', checkAuth,(request, response) => {
     query = `SELECT * FROM user where id = '${request.params.id}' `;
     database.query(query, (error, datas) => {
         if (error) return response.status(500).send(error);
@@ -50,52 +102,41 @@ server.get('/user/:id', (request, response) => {
 });
 
 // POST - Create User
-server.post('/insertuser', (request, response) => {
-    const { name, password } = request.body;
+server.post('/insertuser',(request, response) => {
+    const { username, password } = request.body;
+
+    console.log(username);
+    console.log(typeof(username));
+    console.log(password);
+    console.log(typeof(password));
+
     hashPassword(password).then((newPassword)=>{
-        database.query('INSERT INTO user (name, password) VALUES ("'+name+'","'+newPassword+'")', (error) => {
+        database.query('INSERT INTO user (username, password) VALUES ("'+username+'","'+newPassword+'")', (error) => {
             if (error) return response.status(500).send(error);
-            response.status(201).json({name});
+            response.status(201).json({username});
         });
     })
 });
 
 // PUT - Update User
-server.put('/user/:id', (request, response) => {
-    const { name } = request.body;
+server.put('/user/:id', checkAuth,(request, response) => {
+    const { username } = request.body;
 
-    database.query('UPDATE user SET name = "'+name+'" WHERE id = '+request.params.id+'', (error, result) => {
+    database.query('UPDATE user SET name = "'+username+'" WHERE id = '+request.params.id+'', (error, result) => {
         if (error) return response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
-        response.json({ id: request.params.id, name});
+        response.json({ id: request.params.id, username});
     });
 });
 
 // DELETE - Delete User
-server.delete('/user/:id', (request, response) => {
+server.delete('/user/:id', checkAuth,(request, response) => {
     database.query('DELETE FROM user WHERE id = '+request.params.id+'', (error, result) => {
         if (error) return express.response.status(500).send(error);
         if (result.affectedRows === 0) return response.status(404).send('User not found!');
         response.status(204).send();
     });
 });
-
-server.post('/comments',(request,response)=>{
-    const {author, message} = request.body;
-    console.log(request.body);
-    database.query('INSERT INTO comment (comment, author) VALUES ("'+message+'","'+author+'")', (error) => {
-        if (error) return response.status(500).send(error);
-        response.status(201).json({message});
-    });
-    response.status(201);
-});
-
-server.get('/comments',(request,response)=>{
-    database.query('SELECT * FROM comment', (error, comments) => {
-        if (error) return response.status(500).send(error);
-        response.render('comments',{comments});
-    });
-})
 
 // Start Server
 server.listen(port, () => {
