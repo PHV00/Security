@@ -92,14 +92,14 @@ server.get('/users', checkAuth,(request, response) => {
     });
 });
 
-// GET - Get a user
-server.get('/user/:id', checkAuth,(request, response) => {
-    query = `SELECT * FROM user where id = '${request.params.id}' `;
-    database.query(query, (error, datas) => {
-        if (error) return response.status(500).send(error);
-        response.json(datas);
-    });
-});
+// // GET - Get a user
+// server.get('/user/:id', checkAuth,(request, response) => {
+//     query = `SELECT * FROM user where id = '${request.params.id}' `;
+//     database.query(query, (error, datas) => {
+//         if (error) return response.status(500).send(error);
+//         response.json(datas);
+//     });
+// });
 
 // POST - Create User
 server.post('/insertuser',(request, response) => {
